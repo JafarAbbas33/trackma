@@ -216,6 +216,9 @@ class Data:
     def search(self, criteria, method):
         # Tell API to search
         results = self.api.search(criteria, method)
+        for res in results:
+            in_user_list = 'Yes' if self.showlist.get(res['id']) else 'No'
+            res['extra'].append(('In my list:', in_user_list))
         self.api.logout()
         if results:
             return results
@@ -440,11 +443,9 @@ class Data:
             showid = show['id']
             return self.infocache[showid]
         except KeyError:
-            in_user_list = True if self.showlist.get(show['id']) else False
-            print('In my list:', in_user_list)
-            print('==============================================')
+            in_user_list = 'Yes' if self.showlist.get(show['id']) else 'No'
             res = self.api.request_info([show])[0]
-            print(res['extra'].insert(0, ('In my list:', in_user_list)))
+            res['extra'].append(('In my list:', in_user_list))
             return res
 
     def info_update(self, shows):
