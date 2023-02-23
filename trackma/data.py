@@ -436,10 +436,16 @@ class Data:
 
     def info_get(self, show):
         try:
+            raise KeyError
             showid = show['id']
             return self.infocache[showid]
         except KeyError:
-            return self.api.request_info([show])[0]
+            in_user_list = True if self.showlist.get(show['id']) else False
+            print('In my list:', in_user_list)
+            print('==============================================')
+            res = self.api.request_info([show])[0]
+            print(res['extra'].insert(0, ('In my list:', in_user_list)))
+            return res
 
     def info_update(self, shows):
         for show in shows:
