@@ -19,7 +19,7 @@ import threading
 
 from gi.repository import GLib, GObject, Gtk
 
-from trackma import utils
+from trackma import utils, data
 from trackma.ui.gtk import gtk_dir
 from trackma.ui.gtk.showinfobox import ShowInfoBox
 
@@ -164,8 +164,15 @@ class SearchWindow(Gtk.Window):
         self._selected_show = int(tree_model.get(tree_iter, 0)[0])
         if self._selected_show in self._showdict:
             self.info.load(self._showdict[self._selected_show])
-            self.btn_add_show.set_sensitive(True)
-
+            print('*'*80)
+            print('Enabling...')
+            in_user_list = self._showdict[self._selected_show]['extra'][0][1]
+            print('in_user_list:', in_user_list)
+            print('*'*80)
+            if in_user_list == 'No':
+                self.btn_add_show.set_sensitive(True)
+            else:
+                self.btn_add_show.set_sensitive(False)
 
 class SearchTreeView(Gtk.TreeView):
     def __init__(self, colors):
