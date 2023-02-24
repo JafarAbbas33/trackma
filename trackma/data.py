@@ -163,6 +163,7 @@ class Data:
                  time.time() - self.meta['lastget'] > self.config['autoretrieve_days'] * 84600) or
                     self.meta.get('version') != self.version):
                 try:
+                    raise utils.APIError
                     # Make sure we process the queue first before overwriting the list
                     # We don't want users losing their changes
                     self.process_queue()
@@ -440,9 +441,11 @@ class Data:
 
         self.meta['lastsend'] = time.time()
 
-    def info_get(self, show):
+    def info_get(self, show, force_fetch=False):
         try:
-            raise KeyError
+            if force_fetch:
+                # Raising this error will force fetch the data
+                raise KeyError
             showid = show['id']
             return self.infocache[showid]
         except KeyError:
@@ -560,10 +563,10 @@ class Data:
     def download_data(self):
         """Downloads the remote list and overwrites the cache and info"""
         self.showlist = self.api.fetch_list()
-        try:
-            os.remove(self.info_file)
-        except Exception:
-            pass
+##        try:
+##            os.remove(self.info_file)
+##        except Exception:
+##            pass
         self.infocache.clear()
 
         if self.api.api_info['merge']:

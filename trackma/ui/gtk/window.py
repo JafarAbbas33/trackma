@@ -544,6 +544,7 @@ class TrackmaWindow(Gtk.ApplicationWindow):
 
     def _episode_set(self, show_id, episode):
         try:
+            print('Setting ep')
             self._engine.set_episode(show_id, episode)
         except utils.TrackmaError as e:
             self._error_dialog(e)

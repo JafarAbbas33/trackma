@@ -78,15 +78,18 @@ class ShowInfoBox(Gtk.Box):
         # Start info loading thread
         threading.Thread(target=self._show_load_start_task).start()
 
-    def _show_load_start_task(self):
+    def _show_load_start_task(self, force_fetch=False):
         # Thread to ask the engine for show details
         try:
-            self.details = self._engine.get_show_details(self._show)
+            self.details = self._engine.get_show_details(self._show, force_fetch)
         except utils.TrackmaError as e:
             self.details = None
             self.details_e = e
 
         GObject.idle_add(self._show_load_finish_idle)
+
+    def _refresh_show_info(self, label, href_loc):
+        threading.Thread(target=self._show_load_start_task, args=(True,)).start()
 
     def _show_load_finish_idle(self):
         if self.details:
@@ -104,7 +107,10 @@ class ShowInfoBox(Gtk.Box):
                     detail.append("<b>%s</b>\n%s" % (html.escape(str(title)),
                                                      html.escape(str(content))))
 
-            self.data_label.set_text("\n\n".join(detail))
+################################################################################
+            self.data_label.set_text("\n\n".join(detail) + '\n\n<a href="">Refresh information</a>')
+            self.data_label.connect("activate-link", self._refresh_show_info)
+
             self.data_label.set_use_markup(True)
         else:
             self.label_title.set_text('Error while getting details.')
