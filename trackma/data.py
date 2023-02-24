@@ -553,7 +553,7 @@ class Data:
         utils.save_data(self.meta, self.meta_file)
 
     def download_data(self):
-        """Downloads the remote list and overwrites the cache and info"""
+        """Downloads the remote list and overwrites the cache"""
         self.showlist = self.api.fetch_list()
 
         if self.api.api_info['merge']:
