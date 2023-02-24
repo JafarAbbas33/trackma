@@ -444,11 +444,11 @@ class Engine:
             else:
                 raise utils.EngineError("File name not recognized.")
 
-    def get_show_details(self, show):
+    def get_show_details(self, show, force_fetch=False):
         """
         Returns detailed information about **show** requested from the data handler.
         """
-        return self.data_handler.info_get(show)
+        return self.data_handler.info_get(show, force_fetch)
 
     def regex_list(self, regex):
         """

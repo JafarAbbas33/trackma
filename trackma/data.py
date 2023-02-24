@@ -437,9 +437,11 @@ class Data:
 
         self.meta['lastsend'] = time.time()
 
-    def info_get(self, show):
+    def info_get(self, show, force_fetch=False):
         try:
-            raise KeyError
+            if force_fetch:
+                # Raising this error will force fetch the data
+                raise KeyError
             showid = show['id']
             return self.infocache[showid]
         except KeyError:
@@ -553,11 +555,6 @@ class Data:
     def download_data(self):
         """Downloads the remote list and overwrites the cache and info"""
         self.showlist = self.api.fetch_list()
-        try:
-            os.remove(self.info_file)
-        except Exception:
-            pass
-        self.infocache.clear()
 
         if self.api.api_info['merge']:
             # The API needs information to be merged from the

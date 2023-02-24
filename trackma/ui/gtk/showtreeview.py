@@ -207,6 +207,19 @@ class ShowTreeView(Gtk.TreeView):
     __gsignals__ = {'column-toggled': (GObject.SignalFlags.RUN_LAST,
                                        GObject.TYPE_PYOBJECT, (GObject.TYPE_STRING, GObject.TYPE_BOOLEAN))}
 
+
+    def _search_equal_func(show_tree_view,
+                           tree_model_sort,
+                           column,
+                           search_input_value,
+                           tree_iter):
+        model = show_tree_view.get_model()
+        title = model.get(tree_iter, column)[0]
+        if search_input_value.lower() in title.lower():
+            return False
+        else:
+            return True
+        
     def __init__(self, colors, visible_columns, progress_style=1):
         Gtk.TreeView.__init__(self)
 
@@ -215,6 +228,7 @@ class ShowTreeView(Gtk.TreeView):
         self.progress_style = progress_style
 
         self.set_enable_search(True)
+        self.set_search_equal_func(self._search_equal_func)
         self.set_search_column(1)
         self.set_property('has-tooltip', True)
         self.connect('query-tooltip', self.show_tooltip)
