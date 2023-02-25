@@ -16,6 +16,8 @@
 
 from gi.repository import GObject, Gdk, Gtk, Pango
 
+import datetime
+
 from trackma import utils
 
 
@@ -103,6 +105,16 @@ class ShowListStore(Gtk.ListStore):
         end_date = self.format_date(show['end_date'])
         my_start_date = self.format_date(show['my_start_date'])
         my_finish_date = self.format_date(show['my_finish_date'])
+        
+        next_ep_time = show.get('next_ep_time')
+        next_ep_number = show.get('next_ep_number')
+        if next_ep_time and next_ep_number:
+            max_title_len = 50
+            if len(title_str) > max_title_len:
+                title_str = title_str[:max_title_len-2] + '...'
+            time_diff = str(show.get('next_ep_time') - datetime.datetime.now())
+            next_airing_status_str = f'[E{next_ep_number} in {":".join(time_diff.split(":")[:-1]) if time_diff.count(":") == 2 else time_diff}]'
+            title_str =  f'{title_str} {next_airing_status_str}'
 
         row = [show['id'],
                title_str,
