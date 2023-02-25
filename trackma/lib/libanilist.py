@@ -53,14 +53,15 @@ class libanilist(lib):
         'statuses_start': ['CURRENT', 'REPEATING'],
         'statuses_finish': ['COMPLETED'],
         'statuses_library': ['CURRENT', 'REPEATING', 'PAUSED', 'PLANNING'],
-        'statuses':  ['CURRENT', 'COMPLETED', 'REPEATING', 'PAUSED', 'DROPPED', 'PLANNING'],
+        'statuses':  ['CURRENT', 'COMPLETED', 'REPEATING', 'PAUSED', 'DROPPED', 'PLANNING', 'AIRING'],
         'statuses_dict': {
             'CURRENT': 'Watching',
             'COMPLETED': 'Completed',
             'REPEATING': 'Rewatching',
             'PAUSED': 'Paused',
             'DROPPED': 'Dropped',
-            'PLANNING': 'Plan to Watch'
+            'PLANNING': 'Plan to Watch',
+            'AIRING': 'Airing'
         },
         'score_max': 100,
         'score_step': 1,
@@ -314,8 +315,14 @@ fragment mediaListEntry on MediaList {
                     showdata['next_ep_number'] = media['nextAiringEpisode']['episode']
                     showdata['next_ep_time'] = self._int2date(
                         media['nextAiringEpisode']['airingAt'])
+                # if 'Tomo-chan' in showdata['title']:
+                #     print(showdata)
+                #     print('-'*80)
                 show.update({k: v for k, v in showdata.items() if v})
                 showlist[showid] = show
+                # if 'Tomo-chan' in showdata['title']:
+                #     print(showdata)
+                #     print(show)
         return showlist
 
     args_SaveMediaListEntry = {
@@ -484,6 +491,7 @@ fragment mediaListEntry on MediaList {
                 ('Status',          self._translate_status(item['status'])),
             ]
         }
+        print('TAAAAAAAAAAAAAAAAADDDDDDDDAAAAAAAAAAAAAA', show_info['status'])
         if item.get('nextAiringEpisode', None):
             next_episode_release_time = self._int2date(item.get('nextAiringEpisode').get('airingAt'))
             time_diff  = next_episode_release_time - datetime.datetime.now()

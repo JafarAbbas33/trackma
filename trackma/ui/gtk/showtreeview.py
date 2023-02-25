@@ -16,6 +16,8 @@
 
 from gi.repository import GObject, Gdk, Gtk, Pango
 
+import datetime
+
 from trackma import utils
 
 
@@ -103,6 +105,15 @@ class ShowListStore(Gtk.ListStore):
         end_date = self.format_date(show['end_date'])
         my_start_date = self.format_date(show['my_start_date'])
         my_finish_date = self.format_date(show['my_finish_date'])
+
+        next_ep_time = show.get('next_ep_time')
+        next_ep_number = show.get('next_ep_number')
+        if next_ep_time and next_ep_number:
+            max_title_len = 40
+            if len(title_str) > max_title_len:
+                title_str = title_str[:max_title_len-2] + '...'
+            time_diff = str(show.get('next_ep_time') - datetime.datetime.now())
+            title_str +=  f' [E{next_ep_number} in {":".join(time_diff.split(":")[:-1]) if time_diff.count(":") == 2 else time_diff}]'
   
         row = [show['id'],
                title_str,
@@ -120,9 +131,11 @@ class ShowListStore(Gtk.ListStore):
                my_start_date,
                my_finish_date,
                show['my_status'],
-               show['status']
+               show['status'],
                ]
-        # print(row)
+        # if 'Tomo-chan' in show['title']:
+        #     print(show)
+        # print(row[-2])
         super().append(row)
 
     def update_or_append(self, show):
@@ -191,6 +204,12 @@ class ShowListFilter(Gtk.TreeModelFilter):
         self._status = status
 
     def status_filter(self, model, iterator, data):
+        #####################################################################################################################################
+        # print('status_filter', self._status, model[iterator][1])
+        # print(self.get_value())
+        if model[iterator][1] == 'The World God Only Knows' and self._status == 'AIRING':
+            print('='*80)
+            return True
         return self._status is None or model[iterator][15] == self._status
 
     def get_value(self, obj, key='id'):
@@ -257,7 +276,7 @@ class ShowTreeView(Gtk.TreeView):
             label.show()
             self.cols[name].set_widget(label)
 
-            self.append_column(self.cols[name])
+            self.append_column(self.cols[name]) 
 
             w = self.cols[name].get_widget()
             while not isinstance(w, Gtk.Button):

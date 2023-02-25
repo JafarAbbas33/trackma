@@ -521,6 +521,7 @@ def show():
         'image':        '',
         'image_thumb':  '',
         'queued':       False,
+        'time_until_airing': 0,
     }
 
 

@@ -234,6 +234,7 @@ class MainView(Gtk.Box):
     def _create_notebook_pages(self):
         statuses_nums = self._engine.mediainfo['statuses'].copy()
         statuses_names = self._engine.mediainfo['statuses_dict'].copy()
+
         statuses_nums.append(None)
         statuses_names[None] = 'All'
         self.notebook.handler_block(self.notebook_switch_handler)
@@ -470,6 +471,8 @@ class MainView(Gtk.Box):
                       (show['id'], played_ep))
 
     def _on_switch_notebook_page(self, notebook, page, page_num):
+        ###########################################################################################################################
+        print('CHANGED!!!', self._current_page)
         self._current_page = page
         self._update_widgets_for_selected_show()
 
@@ -534,7 +537,7 @@ class MainView(Gtk.Box):
         self.emit('show-action', event_type, data)
 
     def get_current_status(self):
-        print(self._engine.mediainfo['statuses'])
+        print('get_current_status', self._engine.mediainfo['statuses'])
         return self._current_page.status if self._current_page.status is not None else self._engine.mediainfo['statuses'][-1]
 
     def get_selected_show(self):
