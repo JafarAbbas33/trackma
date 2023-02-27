@@ -325,6 +325,181 @@ fragment mediaListEntry on MediaList {
                 #     print(show)
         return showlist
 
+    def fetch_airing_schedule(self, criteria, method):
+        self.msg.info('Downloading list...')
+                       
+        query = '''
+query AiringScheduleQuery(
+    $page: Int,
+    $airingAtGreater: Int,
+    $airingAtLesser: Int
+) {
+    Page(page: $page) {
+        pageInfo {
+            total
+            perPage
+            currentPage
+            lastPage
+            hasNextPage
+        }
+        airingSchedules(
+            airingAt_greater: $airingAtGreater,
+            airingAt_lesser: $airingAtLesser
+        ) {
+            airingAt
+            timeUntilAiring
+            episode
+            media {
+                id
+                title { userPreferred romaji english native }
+                coverImage { medium large }
+                format
+                averageScore
+                chapters episodes
+                status
+                startDate { year month day }
+                endDate { year month day }
+                siteUrl
+                description
+                genres
+                synonyms
+                averageScore
+                studios(sort: NAME, isMain: true) { nodes { name } }
+                isAdult
+                mediaListEntry {
+                    status
+                }
+            }
+        }
+    }
+}
+'''
+        starting_point = int(datetime.datetime.now().timestamp() - datetime.timedelta(days=1).total_seconds())
+        ending_point = int(datetime.datetime.now().timestamp() + datetime.timedelta(days=1).total_seconds())
+        page = 1
+        variables = {
+            'page': page,
+            'airingAtGreater': starting_point,
+            'airingAtLesser': ending_point
+        }
+        # print('Starting point:', starting_point)
+        # print('Ending point:', ending_point)
+        max_pages = 4
+        shows_list = []
+        while True:
+            if page > max_pages:
+                print(f'Max pages exceeded! Allowed pages: {max_pages}')
+                shows_list.extend([{'id': 0, 'media': {'title': {'english': f'Breaking because requests excceded! Allowed pages: {max_pages}'}}}])
+                break
+
+            print('Getting page:', page)
+            data = self._request(query, variables)['data']
+            # print(response.text)
+            shows_list.extend(data['Page']['airingSchedules'])
+            if not data['Page']['pageInfo']['hasNextPage']:
+                break
+            page += 1
+
+        show_list = []
+        if not shows_list:
+            # No lists returned so no need to continue
+            return show_list
+
+        # Handle different score formats provided by Anilist
+        # self.scoreformat = data['user']['mediaListOptions']['scoreFormat']
+        # self._apply_scoreformat(self.scoreformat)
+
+        # self._set_userconfig('scoreformat_' + self.mediatype, self.scoreformat)
+        # self._emit_signal('userconfig_changed')
+
+        infolist = []
+        for media in shows_list:
+            media.update(media.get('media'))
+            if media.get('timeUntilAiring'):
+                media['nextAiringEpisode'] = {
+                    'episode': media.get('episode'),
+                    'timeUntilAiring': datetime.timedelta(seconds=media.get('timeUntilAiring'))
+                }
+                # media['timeUntilAiring'] = datetime.timedelta(seconds=)
+            infolist.append(self._parse_info(media))
+
+        self._emit_signal('show_info_changed', infolist)
+        return infolist
+    
+        for item in shows_list:
+            show = utils.show()
+            showid = item['id']
+
+            if item['media']['title'].get('english'):
+                title = item['media']['title'].get('english')
+            else:
+                title = item['media']['title'].get('userPreferred')
+            show_info = {
+                'id': showid,
+                'title': title,
+                # 'image': item['coverImage']['large'],
+                # 'image_thumb': item['coverImage']['medium'],
+                # 'url': item['siteUrl'],
+                'extra': [
+                    ('Synopsis',        item.get('description')),
+                    ('Type',            item.get('format')),
+                    ('Average score',   item.get('averageScore')),
+                    # ('Status',          item['status']),
+                ]
+            }
+            # print('='*80)
+            # print(item.get('timeUntilAiring'))
+            # show.update(show_info)
+
+            show.update({k: v for k, v in show_info.items() if v})
+            show_list.append(show)
+
+
+
+
+
+
+
+
+
+            
+            # media = item['media']
+            # showid = media['id']
+            # showdata = {
+            #     'my_id': item['id'],
+            #     'id': showid,
+            #     'title': media['title']['userPreferred'],
+            #     'aliases': self._get_aliases(media),
+            #     'type': self._translate_type(media['format']),
+            #     'status': self._translate_status(media['status']),
+            #     'my_progress': self._c(item['progress']),
+            #     'my_status': my_status,
+            #     'my_score': self._c(item['score']),
+            #     'total': self._c(media[self.total_str]),
+            #     'image': media['coverImage']['large'],
+            #     'image_thumb': media['coverImage']['medium'],
+            #     'url': media['siteUrl'],
+            #     'start_date': self._dict2date(media['startDate']),
+            #     'end_date': self._dict2date(media['endDate']),
+            #     'my_start_date': self._dict2date(item['startedAt']),
+            #     'my_finish_date': self._dict2date(item['completedAt']),
+            # }
+            # if media['nextAiringEpisode']:
+            #     showdata['next_ep_number'] = media['nextAiringEpisode']['episode']
+            #     showdata['next_ep_time'] = self._int2date(
+            #         media['nextAiringEpisode']['airingAt'])
+
+
+            # if 'Tomo-chan' in showdata['title']:
+            #     print(showdata)
+            #     print('-'*80)
+            # show.update({k: v for k, v in showdata.items() if v})
+            # showlist[showid] = show
+            # if 'Tomo-chan' in showdata['title']:
+            #     print(showdata)
+            #     print(show)
+        return show_list
+
     args_SaveMediaListEntry = {
         'id': 'Int',                         # The list entry id, required for updating
         'mediaId': 'Int',                    # The id of the media the entry is of
@@ -463,6 +638,7 @@ fragment mediaListEntry on MediaList {
 
     def _parse_info(self, item):
         info = utils.show()
+        # print('_parse_info', item)
         showid = item['id']
 
         show_info = {
@@ -491,12 +667,20 @@ fragment mediaListEntry on MediaList {
                 ('Status',          self._translate_status(item['status'])),
             ]
         }
-        print('TAAAAAAAAAAAAAAAAADDDDDDDDAAAAAAAAAAAAAA', show_info['status'])
         if item.get('nextAiringEpisode', None):
-            next_episode_release_time = self._int2date(item.get('nextAiringEpisode').get('airingAt'))
-            time_diff  = next_episode_release_time - datetime.datetime.now()
+            airing_at = item.get('nextAiringEpisode').get('airingAt')
+            if airing_at:
+                next_episode_release_time = self._int2date(airing_at)
+                time_diff  = next_episode_release_time - datetime.datetime.now()
+            elif item.get('nextAiringEpisode').get('timeUntilAiring'):
+                time_until_airing = item.get('nextAiringEpisode').get('timeUntilAiring')
+                time_diff = time_until_airing
+            else:
+                time_diff = 'Failed to fetch'
+            
             show_info['extra'].append(('Next Episode', item.get('nextAiringEpisode').get('episode')))
             show_info['extra'].append(('Next Episode In', str(time_diff)))
+
         show_info['extra'].append(('Information fetched on', datetime.datetime.now().strftime("%d %B, %Y at %I:%M %p")))
         info.update(show_info)
         return info

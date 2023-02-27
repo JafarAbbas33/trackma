@@ -214,10 +214,31 @@ class Data:
         """Get list from memory"""
         return self.showlist
 
+    def fetch_airing_schedule(self, criteria, method):
+        # Tell API to search
+        results = self.api.fetch_airing_schedule(criteria, method)
+
+        for res in results:
+            # print('fetch_airing_schedule', res)
+            # print(res['id'])
+            # print(self.showlist)
+            in_user_list = 'Yes' if self.showlist.get(res['id']) else 'No'
+            res['extra'].insert(0, ('In my list:', in_user_list))
+        
+        # print('/'*80)
+        # print(results[0]['extra'])
+        # print('/'*80)
+        self.api.logout()
+        if results:
+            return results
+
+        raise utils.DataError('No results.')
+
     def search(self, criteria, method):
         # Tell API to search
         results = self.api.search(criteria, method)
         for res in results:
+            print('search', res)
             in_user_list = 'Yes' if self.showlist.get(res['id']) else 'No'
             res['extra'].insert(0, ('In my list:', in_user_list))
         # print('/'*80)
@@ -442,6 +463,7 @@ class Data:
         self.meta['lastsend'] = time.time()
 
     def info_get(self, show, force_fetch=False):
+        # print(show)
         try:
             if force_fetch:
                 # Raising this error will force fetch the data
