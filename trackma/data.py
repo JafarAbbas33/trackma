@@ -213,6 +213,20 @@ class Data:
         """Get list from memory"""
         return self.showlist
 
+    def fetch_airing_schedule(self, criteria, method):
+        # Tell API to fetch
+        results = self.api.fetch_airing_schedule(criteria, method)
+
+        for res in results:
+            in_user_list = 'Yes' if self.showlist.get(res['id']) else 'No'
+            res['extra'].insert(0, ('In my list:', in_user_list))
+ 
+        self.api.logout()
+        if results:
+            return results
+
+        raise utils.DataError('No results.')
+
     def search(self, criteria, method):
         # Tell API to search
         results = self.api.search(criteria, method)

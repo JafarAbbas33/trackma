@@ -11,6 +11,10 @@
         <attribute name="action">win.accounts</attribute>
         <attribute name="label" translatable="yes">Accounts</attribute>
       </item>
+      <item>
+        <attribute name="action">win.airing_schedule</attribute>
+        <attribute name="label" translatable="yes">Airing Schedule</attribute>
+      </item>
     </section>
 
     <section>

@@ -318,6 +318,95 @@ fragment mediaListEntry on MediaList {
                 showlist[showid] = show
         return showlist
 
+    def fetch_airing_schedule(self, criteria, method):
+        self.msg.info('Downloading list...')
+                       
+        query = '''
+query AiringScheduleQuery(
+    $page: Int,
+    $airingAtGreater: Int,
+    $airingAtLesser: Int
+) {
+    Page(page: $page) {
+        pageInfo {
+            total
+            perPage
+            currentPage
+            lastPage
+            hasNextPage
+        }
+        airingSchedules(
+            airingAt_greater: $airingAtGreater,
+            airingAt_lesser: $airingAtLesser
+        ) {
+            airingAt
+            timeUntilAiring
+            episode
+            media {
+                id
+                title { userPreferred romaji english native }
+                coverImage { medium large }
+                format
+                averageScore
+                chapters episodes
+                status
+                startDate { year month day }
+                endDate { year month day }
+                siteUrl
+                description
+                genres
+                synonyms
+                averageScore
+                studios(sort: NAME, isMain: true) { nodes { name } }
+                isAdult
+                mediaListEntry {
+                    status
+                }
+            }
+        }
+    }
+}
+'''
+        starting_point = int(datetime.datetime.now().timestamp() - datetime.timedelta(days=1).total_seconds())
+        ending_point = int(datetime.datetime.now().timestamp() + datetime.timedelta(days=1).total_seconds())
+        page = 1
+        variables = {
+            'page': page,
+            'airingAtGreater': starting_point,
+            'airingAtLesser': ending_point
+        }
+        max_pages = 4
+        shows_list = []
+        while True:
+            if page > max_pages:
+                print(f'Max pages exceeded! Allowed pages: {max_pages}')
+                shows_list.extend([{'id': 0, 'media': {'title': {'english': f'Breaking because requests excceded! Allowed pages: {max_pages}'}}}])
+                break
+
+            print('Getting page:', page)
+            data = self._request(query, variables)['data']
+            shows_list.extend(data['Page']['airingSchedules'])
+            if not data['Page']['pageInfo']['hasNextPage']:
+                break
+            page += 1
+
+        show_list = []
+        if not shows_list:
+            return show_list
+
+        infolist = []
+        for media in shows_list:
+            media.update(media.get('media'))
+            if media.get('timeUntilAiring'):
+                media['nextAiringEpisode'] = {
+                    'episode': media.get('episode'),
+                    'timeUntilAiring': media.get('timeUntilAiring')
+                }
+            infolist.append(self._parse_info(media))
+
+        self._emit_signal('show_info_changed', infolist)
+        return infolist
+
     args_SaveMediaListEntry = {
         'id': 'Int',                         # The list entry id, required for updating
         'mediaId': 'Int',                    # The id of the media the entry is of
@@ -484,11 +573,20 @@ fragment mediaListEntry on MediaList {
                 ('Status',          self._translate_status(item['status'])),
             ]
         }
-        if item.get('nextAiringEpisode', None):
-            next_episode_release_time = self._int2date(item.get('nextAiringEpisode').get('airingAt'))
-            time_diff  = next_episode_release_time - datetime.datetime.now()
+        if item.get('nextAiringEpisode'):
+            airing_at = item.get('nextAiringEpisode').get('airingAt')
+            if airing_at:
+                next_episode_release_time = self._int2date(airing_at)
+                time_diff  = (next_episode_release_time - datetime.datetime.now()).total_seconds()
+            elif item.get('nextAiringEpisode').get('timeUntilAiring'):
+                time_until_airing = item.get('nextAiringEpisode').get('timeUntilAiring')
+                time_diff = time_until_airing
+            else:
+                time_diff = '-'
+
             show_info['extra'].append(('Next Episode', item.get('nextAiringEpisode').get('episode')))
-            show_info['extra'].append(('Next Episode In', str(time_diff)))
+            show_info['extra'].append(('Next Episode In', utils.seconds_to_str(time_diff)))
+
         show_info['extra'].append(('Information fetched on', datetime.datetime.now().strftime("%d %B, %Y at %I:%M %p")))
         info.update(show_info)
         return info
@@ -542,7 +640,7 @@ fragment mediaListEntry on MediaList {
         if not item:
             return None
         try:
-            return datetime.datetime.utcfromtimestamp(item)
+            return datetime.datetime.fromtimestamp(item)
         except ValueError:
             return None
 

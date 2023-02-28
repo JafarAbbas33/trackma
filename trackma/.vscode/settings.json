@@ -1,0 +1,15 @@
+{
+    "launch": {
+        "configurations": [
+            {
+
+                "name": "Python: Current File",
+                "type": "python",
+                "request": "launch",
+                "program": "/home/jafarabbas33/.virtualenvs/my_trackma/bin/trackma-gtk",
+                "console": "integratedTerminal",
+                "justMyCode": true
+            }
+        ],
+    }
+}

@@ -366,6 +366,19 @@ def change_permissions(filename, mode):
     os.chmod(filename, mode)
 
 
+def seconds_to_str(secs):
+    if secs == '-':
+        return secs
+    post_fix = ''
+    if secs < 0:
+        secs *= -1
+        post_fix = ' ago'
+    
+    time_diff = str(datetime.timedelta(seconds=secs))
+    time_diff = ":".join(time_diff.split(":")[:-1]) if time_diff.count(":") == 2 else time_diff
+    return time_diff + post_fix
+
+
 def estimate_aired_episodes(show):
     """ Estimate how many episodes have passed since airing """
 

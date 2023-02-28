@@ -109,13 +109,14 @@ class ShowListStore(Gtk.ListStore):
         next_ep_time = show.get('next_ep_time')
         next_ep_number = show.get('next_ep_number')
         if next_ep_time and next_ep_number:
-            max_title_len = 50
+            max_title_len = 40
             if len(title_str) > max_title_len:
                 title_str = title_str[:max_title_len-2] + '...'
+            time_diff = (show.get('next_ep_time') - datetime.datetime.now()).total_seconds()
+            utils.seconds_to_str(time_diff)
             time_diff = str(show.get('next_ep_time') - datetime.datetime.now())
-            next_airing_status_str = f'[E{next_ep_number} in {":".join(time_diff.split(":")[:-1]) if time_diff.count(":") == 2 else time_diff}]'
-            title_str =  f'{title_str} {next_airing_status_str}'
-
+            title_str +=  f' [E{next_ep_number} in {":".join(time_diff.split(":")[:-1]) if time_diff.count(":") == 2 else time_diff}]'
+  
         row = [show['id'],
                title_str,
                show['my_progress'],

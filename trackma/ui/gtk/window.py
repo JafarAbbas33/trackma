@@ -29,6 +29,7 @@ from trackma.ui.gtk import gtk_dir
 from trackma.ui.gtk.accountswindow import AccountsWindow
 from trackma.ui.gtk.mainview import MainView
 from trackma.ui.gtk.searchwindow import SearchWindow
+from trackma.ui.gtk.airingwindow import AiringWindow
 from trackma.ui.gtk.settingswindow import SettingsWindow
 from trackma.ui.gtk.showeventtype import ShowEventType
 from trackma.ui.gtk.showinfowindow import ShowInfoWindow
@@ -177,6 +178,7 @@ class TrackmaWindow(Gtk.ApplicationWindow):
             self.add_action(action)
 
         add_action('search', self._on_search)
+        add_action('airing_schedule', self._on_show_airing_schedule)
         add_action('synchronize', self._on_synchronize)
         add_action('upload', self._on_upload)
         add_action('download', self._on_download)
@@ -238,6 +240,15 @@ class TrackmaWindow(Gtk.ApplicationWindow):
         self._set_buttons_sensitive(False)
         self._main_view.load_account_mediatype(
             None, mediatype, self.header_bar)
+
+    def _on_show_airing_schedule(self, action, param):
+        current_status = self._main_view.get_current_status()
+        win = AiringWindow(
+            self._engine, self._config['colors'], current_status, transient_for=self)
+        win.connect('search-error', self._on_search_error)
+        win.connect('destroy', self._on_modal_destroy)
+        win.present()
+        self._modals.append(win)
 
     def _on_search(self, action, param):
         current_status = self._main_view.get_current_status()
