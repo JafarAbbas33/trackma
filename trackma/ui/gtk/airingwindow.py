@@ -99,6 +99,7 @@ class AiringWindow(Gtk.Window):
         self.progress_spinner.start()
 
         self.switch_show_users_only.connect("notify::active", lambda switch, gparam: self._search_finish_idle(self._entries, None))
+        self.showlist.grab_focus()
         
         # self.switch_show_users_only.connect("notify::active", self.on_switch_activated)
         # GLib.idle_add(self._callback, self._entries, self._error)
