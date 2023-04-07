@@ -62,6 +62,7 @@ class AiringWindow(Gtk.Window):
     shows_viewport = Gtk.Template.Child()
     show_info_container = Gtk.Template.Child()
     progress_spinner = Gtk.Template.Child()
+    switch_show_users_only = Gtk.Template.Child()
     headerbar = Gtk.Template.Child()
 
     def __init__(self, engine, colors, current_status, transient_for=None):
@@ -76,6 +77,9 @@ class AiringWindow(Gtk.Window):
         self._search_thread = None
 
         self.showlist = SearchTreeView(colors)
+        self.showlist.set_enable_search(True)
+        self.showlist.set_search_column(1)
+        self.showlist.set_search_equal_func(self._search_equal_func)
         self.showlist.get_selection().connect("changed", self._on_selection_changed)
         self.showlist.set_size_request(400, 500)
         self.showlist.show()
@@ -88,7 +92,28 @@ class AiringWindow(Gtk.Window):
         self.show_info_container.pack_start(self.info, True, True, 0)
         self.search_paned.set_position(600)
         self.set_size_request(1060, 400)
+
+        self.switch_show_users_only.set_active(False)
+
         GLib.idle_add(self._search, '')
+        self.progress_spinner.start()
+
+        self.switch_show_users_only.connect("notify::active", lambda switch, gparam: self._search_finish_idle(self._entries, None))
+        
+        # self.switch_show_users_only.connect("notify::active", self.on_switch_activated)
+        # GLib.idle_add(self._callback, self._entries, self._error)
+
+    def _search_equal_func(show_tree_view,
+                           tree_model_sort,
+                           column,
+                           search_input_value,
+                           tree_iter):
+        model = show_tree_view.showlist.get_model()
+        title = model.get(tree_iter, column)[0]
+        if search_input_value.lower() in title.lower():
+            return False
+        else:
+            return True
 
     def _search(self, text):
         if self._search_thread:
@@ -104,20 +129,28 @@ class AiringWindow(Gtk.Window):
         self.headerbar.set_subtitle('Retrieved airing schedule')
 
     def _search_finish_idle(self, entries, error):
-        print('Total entries:', len(entries))
+        print('Total shows retrived:', len(entries))
 
         self._entries = entries
         self._showdict = dict()
         self._search_finish()
         self.showlist.append_start()
 
+        _showlist = self._engine.data_handler.showlist
+
         for show in entries:
+            if self.switch_show_users_only.get_active():
+                # Show full list
+                self.showlist.append(show)
+            else:
+                if show['id'] in _showlist:
+                    self.showlist.append(show)
             self._showdict[show['id']] = show
-            self.showlist.append(show)
 
         self.showlist.append_finish()
 
         self.btn_add_show.set_sensitive(False)
+        self.progress_spinner.stop()
 
         if error:
             self.emit('search-error', error)

@@ -371,24 +371,24 @@ query AiringScheduleQuery(
         ending_point = int(datetime.datetime.now().timestamp() + datetime.timedelta(days=1).total_seconds())
         page = 1
         variables = {
-            'page': page,
+            'page': 1,
             'airingAtGreater': starting_point,
             'airingAtLesser': ending_point
         }
         max_pages = 4
         shows_list = []
-        while True:
-            if page > max_pages:
+        while True:            
+            if variables['page'] > max_pages:
                 print(f'Max pages exceeded! Allowed pages: {max_pages}')
-                shows_list.extend([{'id': 0, 'media': {'title': {'english': f'Breaking because requests excceded! Allowed pages: {max_pages}'}}}])
+                # shows_list.extend([{'id': 0, 'media': {'episodes': 0, 'synonyms': ''], 'title': {'romaji': '', 'native': '', 'english': '', 'userPreferred': f'Breaking because requests excceded! Allowed pages: {max_pages}'}}}])
                 break
 
-            print('Getting page:', page)
+            print('Getting page:', variables['page'])
             data = self._request(query, variables)['data']
             shows_list.extend(data['Page']['airingSchedules'])
             if not data['Page']['pageInfo']['hasNextPage']:
                 break
-            page += 1
+            variables['page'] = variables['page'] + 1
 
         show_list = []
         if not shows_list:
