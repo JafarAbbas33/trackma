@@ -318,6 +318,98 @@ fragment mediaListEntry on MediaList {
                 showlist[showid] = show
         return showlist
 
+<<<<<<< Updated upstream
+=======
+    def fetch_airing_schedule(self, criteria, method):
+        self.msg.info('Downloading list...')
+                       
+        query = '''
+query AiringScheduleQuery(
+    $page: Int,
+    $airingAtGreater: Int,
+    $airingAtLesser: Int
+) {
+    Page(page: $page) {
+        pageInfo {
+            total
+            perPage
+            currentPage
+            lastPage
+            hasNextPage
+        }
+        airingSchedules(
+            airingAt_greater: $airingAtGreater,
+            airingAt_lesser: $airingAtLesser
+        ) {
+            airingAt
+            timeUntilAiring
+            episode
+            media {
+                id
+                title { userPreferred romaji english native }
+                coverImage { medium large }
+                format
+                averageScore
+                chapters episodes
+                status
+                startDate { year month day }
+                endDate { year month day }
+                siteUrl
+                description
+                genres
+                synonyms
+                averageScore
+                studios(sort: NAME, isMain: true) { nodes { name } }
+                isAdult
+                mediaListEntry {
+                    status
+                }
+            }
+        }
+    }
+}
+'''
+        starting_point = int(datetime.datetime.now().timestamp() - datetime.timedelta(days=1).total_seconds())
+        ending_point = int(datetime.datetime.now().timestamp() + datetime.timedelta(days=1).total_seconds())
+        variables = {
+            'page': 1,
+            'airingAtGreater': starting_point,
+            'airingAtLesser': ending_point
+        }
+        max_pages = 4
+        shows_list = []
+        while True:            
+            if variables['page'] > max_pages:
+                print(f'Max pages exceeded! Allowed pages: {max_pages}')
+                # shows_list.extend([{'id': 0, 'media': {'episodes': 0, 'synonyms': ''], 'title': {'romaji': '', 'native': '', 'english': '', 'userPreferred': f'Breaking because requests excceded! Allowed pages: {max_pages}'}}}])
+                break
+
+            print('Getting page:', variables['page'])
+            data = self._request(query, variables)['data']
+            # print('variables:', variables, '|', "hasNextPage:", data['Page']['pageInfo']['hasNextPage'], "|", "total:", data['Page']['pageInfo']['total'])
+            shows_list.extend(data['Page']['airingSchedules'])
+            if not data['Page']['pageInfo']['hasNextPage']:
+                break
+            variables['page'] = variables['page'] + 1
+
+        show_list = []
+        if not shows_list:
+            return show_list
+
+        infolist = []
+        for media in shows_list:
+            media.update(media.get('media'))
+            if media.get('timeUntilAiring'):
+                media['nextAiringEpisode'] = {
+                    'episode': media.get('episode'),
+                    'timeUntilAiring': media.get('timeUntilAiring')
+                }
+            infolist.append(self._parse_info(media))
+
+        self._emit_signal('show_info_changed', infolist)
+        return infolist
+
+>>>>>>> Stashed changes
     args_SaveMediaListEntry = {
         'id': 'Int',                         # The list entry id, required for updating
         'mediaId': 'Int',                    # The id of the media the entry is of
