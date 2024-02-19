@@ -31,7 +31,7 @@ import uuid
 from copy import deepcopy
 from enum import Enum, auto
 
-VERSION = '0.8.5'
+VERSION = '0.8.6'
 
 DATADIR = os.path.dirname(__file__) + '/data'
 
@@ -618,6 +618,7 @@ config_defaults = {
     'redirections_url': 'https://raw.githubusercontent.com/erengy/anime-relations/master/anime-relations.txt',
     'redirections_time': 1,
     'use_hooks': True,
+    'title_parser': 'aie',
 }
 
 userconfig_defaults = {
